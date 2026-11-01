@@ -1,15 +1,28 @@
-# Clasificador de Spam
+# Clasificación de Spam
 
-Modelos de ML (Naive Bayes, Regresión logística y SVM) para clasificar mensajes de spam en español, entrenados con el dataset sintético [synthetic-spam-detection-dataset-spanish](https://huggingface.co/datasets/tanaos/synthetic-spam-detection-dataset-spanish) (15,016 mensajes).
+Clasificación de mensajes de spam en español con machine learning. Entrena modelos Naive Bayes, Regresión Logística y SVM, incluye un pipeline reproducible, una CLI y una API web.
+
+Dataset de entrenamiento: [synthetic-spam-detection-dataset-spanish](https://huggingface.co/datasets/tanaos/synthetic-spam-detection-dataset-spanish) de Tanaos (15.016 mensajes).
 
 ## Instalación
 
+Requiere Python 3.11 o superior.
+
 ```bash
 pip install -r requirements.txt
-cd frontend && npm install
+python -m nltk.downloader stopwords # solo si usarás la CLI/API sin entrenar
+npm --prefix frontend install
 ```
 
-## Instrucciones de uso
+## Entrenamiento
+
+```bash
+python src/main.py
+```
+
+Genera `data/`, `models/` y `notebook/`. El pipeline descarga el dataset, limpia el texto, vectoriza con TF-IDF, ajusta hiperparámetros con validación cruzada y guarda las métricas en `models/manifest.json`. La semilla está fijada en 42.
+
+## Instrucciones
 
 ### CLI
 
@@ -20,8 +33,11 @@ python src/prediccion.py
 ### Interfaz web (desarrollo)
 
 ```bash
-cd backend && uvicorn api:app --reload
-cd frontend && npm run dev
+# terminal 1
+uvicorn backend.api:app --reload
+
+# terminal 2
+npm --prefix frontend run dev
 ```
 
 Abrir http://localhost:3000.
@@ -29,26 +45,27 @@ Abrir http://localhost:3000.
 ### Interfaz web (producción)
 
 ```bash
-cd frontend && npm run build
+npm --prefix frontend run build
 python backend/api.py
 ```
 
 Abrir http://localhost:8000.
 
-## Entrenamiento
-
-Todos los artefactos de `data/`, `models/` y `notebook/` se generan desde cero ejecutando el pipeline completo. El entrenamiento es reproducible: la semilla aleatoria está fijada en 42, por lo que cada pipeline produce los mismos resultados. El único paso que requiere internet es la descarga del dataset.
-
-```bash
-python src/main.py
-```
-
-El pipeline descarga el dataset, analiza los datos, limpia el texto, divide en train/test, vectoriza con TF-IDF, entrena los tres modelos y los evalúa.
-
 ## API
 
-Backend desarrollado con FastAPI en `backend/api.py`. Documentación interactiva de cada endpoint disponible en `/docs` al ejecutar el servidor.
+Documentación interactiva en `/docs`.
+
+| Método | Ruta | Descripción |
+| --- | --- | --- |
+| GET | `/health` | Estado del servidor |
+| GET | `/api/modelos` | Modelos disponibles |
+| GET | `/api/metricas` | Métricas del entrenamiento |
+| POST | `/api/clasificar` | Clasificar un mensaje |
+
+CORS se configura con `CORS_ORIGINS`; host y puerto con `HOST` y `PORT`.
 
 ## Licencia
 
-Este proyecto se distribuye bajo la licencia GPLv3. Consulta [LICENSE](./LICENSE) para más información. El dataset utilizado se distribuye por separado bajo la licencia MIT.
+El dataset es de Tanaos y se distribuye bajo la licencia MIT. Ver [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) para más información.
+
+Este proyecto se distribuye bajo la licencia Zlib. Ver [LICENSE](./LICENSE).

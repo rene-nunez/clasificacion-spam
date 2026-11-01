@@ -1,6 +1,7 @@
 {
-  "name": "clasificador-spam",
+  "name": "clasificacion-spam",
   "private": true,
+  "license": "Zlib",
   "type": "module",
   "scripts": {
     "dev": "vite",
