@@ -1,22 +1,43 @@
-import sys
-import os
+"""Aplicación FastAPI para la clasificación de spam."""
+
 import logging
+import os
+import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
-from config import BASE_DIR, modelos
-from schemas import MensajeRequest, ClasificacionResponse
-from clasificador import clasificar
+# Permite ejecutar tanto `python backend/api.py` como
+# `uvicorn backend.api:app` desde la raíz del proyecto.
+if __package__ in (None, ""):
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from backend.clasificador import clasificar
+from backend.config import manifest, modelos
+from backend.schemas import ClasificacionResponse, MensajeRequest
+from spamclf.registry import BASE_DIR
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+DIST_DIR = BASE_DIR / "frontend" / "dist"
+ASSETS_DIR = DIST_DIR / "assets"
+INDEX_FILE = DIST_DIR / "index.html"
+RUTAS_RESERVADAS = {"api", "docs", "redoc", "openapi.json"}
+
+
+def origenes_permitidos() -> list[str]:
+    valor = os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://localhost:8000",
+    )
+    return [origen.strip() for origen in valor.split(",") if origen.strip()]
+
 
 tags_metadata = [
     {
@@ -38,8 +59,11 @@ tags_metadata = [
 ]
 
 app = FastAPI(
-    title="Clasificador de Spam",
-    description="API REST para clasificar mensajes de texto como spam o ham usando modelos de Machine Learning entrenados en español.",
+    title="Clasificación de Spam",
+    description=(
+        "API REST para clasificar mensajes de texto como spam o ham usando "
+        "modelos de Machine Learning entrenados en español."
+    ),
     version="1.0.0",
     openapi_tags=tags_metadata,
     docs_url="/docs",
@@ -48,20 +72,21 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:8000",
-    ],
+    allow_origins=origenes_permitidos(),
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
 )
 
+if ASSETS_DIR.is_dir():
+    app.mount("/assets", StaticFiles(directory=ASSETS_DIR), name="assets")
+
+
 @app.get("/", include_in_schema=False)
 def root():
-    dist_index = os.path.join(BASE_DIR, "frontend", "dist", "index.html")
-    if os.path.isfile(dist_index):
-        return FileResponse(dist_index)
+    if INDEX_FILE.is_file():
+        return FileResponse(INDEX_FILE, headers={"Cache-Control": "no-cache"})
     return RedirectResponse(url="/docs")
+
 
 @app.get(
     "/health",
@@ -71,6 +96,7 @@ def root():
 def health():
     """Verifica que el servidor y los modelos estén operativos."""
     return {"status": "ok", "modelos": len(modelos)}
+
 
 @app.get(
     "/api/modelos",
@@ -82,6 +108,23 @@ def listar_modelos():
     """Devuelve los nombres de los modelos ML cargados y listos para usar."""
     logger.info("Listado de modelos solicitado")
     return list(modelos.keys())
+
+
+@app.get(
+    "/api/metricas",
+    tags=["Modelos"],
+    summary="Consultar métricas del entrenamiento",
+    response_model=dict,
+)
+def listar_metricas():
+    """Devuelve el manifiesto con métricas y parámetros de los modelos."""
+    if manifest is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No hay métricas disponibles. Ejecuta: python src/main.py",
+        )
+    return manifest
+
 
 @app.post(
     "/api/clasificar",
@@ -97,33 +140,33 @@ def clasificar_endpoint(req: MensajeRequest):
     logger.info("Clasificando mensaje con modelo: %s", req.modelo)
     return clasificar(req.mensaje, req.modelo)
 
+
 @app.get("/{path:path}", tags=["Frontend"], include_in_schema=False)
-
 def servir_frontend(path: str):
-    dist = os.path.join(BASE_DIR, "frontend", "dist")
-    index = os.path.join(dist, "index.html")
+    """Sirve los archivos del frontend compilado y las rutas de la SPA."""
+    if path.split("/", 1)[0] in RUTAS_RESERVADAS:
+        raise HTTPException(status_code=404, detail="Not Found")
 
-    requested = os.path.realpath(os.path.join(dist, path))
-    dist_real = os.path.realpath(dist)
+    if not INDEX_FILE.is_file():
+        raise HTTPException(
+            status_code=404,
+            detail="Frontend no compilado. Ejecuta: cd frontend && npm run build",
+        )
 
-    if not requested.startswith(dist_real):
-        requested = os.path.realpath(os.path.join(BASE_DIR, "frontend", "index.html"))
-        if os.path.isfile(requested):
-            return FileResponse(requested)
-        return FileResponse(index)
+    dist_real = DIST_DIR.resolve()
+    solicitado = (DIST_DIR / path).resolve()
 
-    if path == "" or path == "index.html" or not os.path.isfile(requested):
-        if os.path.isfile(index):
-            return FileResponse(index)
-        return FileResponse(os.path.join(BASE_DIR, "frontend", "index.html"))
+    if path and solicitado.is_relative_to(dist_real) and solicitado.is_file():
+        return FileResponse(solicitado)
 
-    return FileResponse(requested)
+    return FileResponse(INDEX_FILE, headers={"Cache-Control": "no-cache"})
+
 
 if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "api:app",
-        host="0.0.0.0",
-        port=8000,
+        app,
+        host=os.getenv("HOST", "0.0.0.0"),
+        port=int(os.getenv("PORT", "8000")),
     )

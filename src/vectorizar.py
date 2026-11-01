@@ -1,7 +1,10 @@
+# Vectorización TF-IDF del texto limpio
+
 import os
+
+import joblib
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
-import joblib
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -15,14 +18,16 @@ if __name__ == "__main__":
     print(f"Train: {len(train)} mensajes")
     print(f"Test: {len(test)} mensajes")
 
-    vectorizer = TfidfVectorizer(max_df=0.95, min_df=2, ngram_range=(1, 2))
+    vectorizer = TfidfVectorizer(
+        max_df=0.95,
+        min_df=2,
+        ngram_range=(1, 2),
+        token_pattern=r"\S+",
+    )
 
     X_train = vectorizer.fit_transform(train["mensaje_limpio"])
 
     X_test = vectorizer.transform(test["mensaje_limpio"])
-
-    y_train = train["spam"]
-    y_test = test["spam"]
 
     print(f"\nVocabulario aprendido: {len(vectorizer.get_feature_names_out())} palabras")
     print(f"Train vectorizado: {X_train.shape}")
@@ -32,4 +37,4 @@ if __name__ == "__main__":
     os.makedirs(models_dir, exist_ok=True)
 
     joblib.dump(vectorizer, os.path.join(models_dir, "vectorizer.pkl"))
-    print(f"\nVectorizador guardado: models/vectorizer.pkl")
+    print("\nVectorizador guardado: models/vectorizer.pkl")

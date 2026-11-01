@@ -1,14 +1,19 @@
-import os
-import re
-import pandas as pd
-import nltk
+# Limpieza y normalización del texto
 
-nltk.download("stopwords", quiet=True)
-from nltk.corpus import stopwords
+import os
+import sys
+
+import nltk
+import pandas as pd
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, BASE_DIR)
+
+from spamclf.preprocessing import limpiar_texto
 
 if __name__ == "__main__":
+    nltk.download("stopwords", quiet=True)
+
     ruta_csv = os.path.join(BASE_DIR, "data", "spam_dataset.csv")
     df = pd.read_csv(ruta_csv)
 
@@ -19,27 +24,15 @@ if __name__ == "__main__":
     despues = len(df)
     print(f"\nDuplicados eliminados: {antes - despues}")
 
-    df["mensaje"] = df["mensaje"].str.lower()
-
-    df["mensaje_limpio"] = df["mensaje"].apply(
-        lambda texto: re.sub(r"[^a-záéíóúüñ0-9\s]", "", texto)
-    )
-
-    stop_words = set(stopwords.words("spanish"))
-
-    def limpiar_texto(texto):
-        tokens = texto.split()
-        tokens = [t for t in tokens if t not in stop_words and len(t) > 1]
-        return " ".join(tokens)
-
-    df["mensaje_limpio"] = df["mensaje_limpio"].apply(limpiar_texto)
+    df["mensaje"] = df["mensaje"].fillna("")
+    df["mensaje_limpio"] = df["mensaje"].apply(limpiar_texto)
 
     ruta_salida = os.path.join(BASE_DIR, "data", "spam_limpio.csv")
     df.to_csv(ruta_salida, index=False)
-    print(f"\nDataset limpio guardado: data/spam_limpio.csv")
+    print("\nDataset limpio guardado: data/spam_limpio.csv")
 
     print("\nComparacion antes/despues:")
-    for i in range(3):
+    for i in range(min(3, len(df))):
         original = df["mensaje"].iloc[i]
         limpio = df["mensaje_limpio"].iloc[i]
         print(f"\nOriginal: {original}")

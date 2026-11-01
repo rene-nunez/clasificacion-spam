@@ -4,7 +4,7 @@ import os
 from datasets import load_dataset
 import pandas as pd
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # Raíz
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Raíz
 
 if __name__ == "__main__":
     dataset = load_dataset("tanaos/synthetic-spam-detection-dataset-spanish")

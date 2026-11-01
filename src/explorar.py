@@ -1,6 +1,13 @@
+# Análisis exploratorio del dataset
+
 import os
-import pandas as pd
+
+import matplotlib
+
+matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
 from wordcloud import WordCloud
 
@@ -12,6 +19,7 @@ if __name__ == "__main__":
 
     ruta_csv = os.path.join(BASE_DIR, "data", "spam_dataset.csv")
     df = pd.read_csv(ruta_csv)
+    df["mensaje"] = df["mensaje"].fillna("")
 
     print("Análisis exploratorio del dataset")
 
@@ -22,7 +30,7 @@ if __name__ == "__main__":
 
     print("\nDistribución de clases")
     print(df["label"].value_counts())
-    print(f"\nPorcentajes:")
+    print("\nPorcentajes:")
     print(df["label"].value_counts(normalize=True).mul(100).round(1).astype(str) + "%")
 
     plt.figure(figsize=(6, 4))
@@ -32,6 +40,7 @@ if __name__ == "__main__":
     plt.ylabel("Cantidad")
     plt.tight_layout()
     plt.savefig(os.path.join(NOTEBOOK_DIR, "distribucion_clases.png"))
+    plt.close()
     print(f"\nGráfico creado: {os.path.join(NOTEBOOK_DIR, 'distribucion_clases.png')}")
 
     print("-" * 30)
@@ -51,6 +60,7 @@ if __name__ == "__main__":
     plt.legend()
     plt.tight_layout()
     plt.savefig(os.path.join(NOTEBOOK_DIR, "histograma_longitud.png"))
+    plt.close()
     print(f"Gráfico creado: {os.path.join(NOTEBOOK_DIR, 'histograma_longitud.png')}")
 
     print("-" * 30)
@@ -75,6 +85,7 @@ if __name__ == "__main__":
 
     plt.tight_layout()
     plt.savefig(os.path.join(NOTEBOOK_DIR, "nubes_palabras.png"))
+    plt.close()
     print(f"Gráfico creado: {os.path.join(NOTEBOOK_DIR, 'nubes_palabras.png')}")
 
     print("-" * 30)
@@ -87,11 +98,11 @@ if __name__ == "__main__":
 
     print("-" * 30)
 
-    print(f"\nCalidad de datos")
+    print("\nCalidad de datos")
     print(f"Valores nulos: {df.isnull().sum().sum()}")
     duplicados = df.duplicated(subset=["mensaje"]).sum()
-    print(f"Mensajes duplicados: {duplicados} ({duplicados/len(df)*100:.1f}%)")
+    print(f"Mensajes duplicados: {duplicados} ({duplicados / len(df) * 100:.1f}%)")
 
     print("-" * 30)
 
-    print(f"\nAnalisis completado. Revisa los graficos en la carpeta notebook/")
+    print("\nAnalisis completado. Revisa los graficos en la carpeta notebook/")

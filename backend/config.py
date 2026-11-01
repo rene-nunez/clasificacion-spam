@@ -1,18 +1,11 @@
-import os
-import joblib
-import nltk
-from nltk.corpus import stopwords
+"""Configuración y carga de los artefactos usados por la API."""
 
-nltk.download("stopwords", quiet=True)
+from spamclf.preprocessing import cargar_stopwords
+from spamclf.registry import cargar_manifest, cargar_modelos, cargar_vectorizer
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Fallar al arrancar con un mensaje claro si faltan las stopwords de NLTK.
+cargar_stopwords()
 
-stop_words = set(stopwords.words("spanish"))
-
-vectorizer = joblib.load(os.path.join(BASE_DIR, "models", "vectorizer.pkl"))
-
-modelos = {
-    "Regresión Logística": joblib.load(os.path.join(BASE_DIR, "models", "regresion_logistica.pkl")),
-    "Naive Bayes": joblib.load(os.path.join(BASE_DIR, "models", "naive_bayes.pkl")),
-    "SVM": joblib.load(os.path.join(BASE_DIR, "models", "svm.pkl")),
-}
+vectorizer = cargar_vectorizer()
+modelos = cargar_modelos()
+manifest = cargar_manifest()
