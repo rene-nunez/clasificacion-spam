@@ -1,8 +1,8 @@
 # Clasificación de Spam
 
-Clasificación de mensajes de spam en español con machine learning. Entrena modelos Naive Bayes, Regresión Logística y SVM, incluye un pipeline reproducible, una CLI y una API web.
+Proyecto de clasificación de mensajes de spam en español mediante aprendizaje automático. Entrena y evalúa modelos de Naive Bayes, regresión logística y SVM. Incluye un pipeline reproducible, una interfaz de línea de comandos (CLI) y una API web.
 
-Dataset de entrenamiento: [synthetic-spam-detection-dataset-spanish](https://huggingface.co/datasets/tanaos/synthetic-spam-detection-dataset-spanish) de Tanaos (15.016 mensajes).
+El entrenamiento utiliza el dataset [synthetic-spam-detection-dataset-spanish](https://huggingface.co/datasets/tanaos/synthetic-spam-detection-dataset-spanish), creado por Tanaos, con 15.016 mensajes.
 
 ## Instalación
 
