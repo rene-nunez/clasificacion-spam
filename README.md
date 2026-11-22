@@ -40,31 +40,20 @@ uvicorn backend.api:app --reload
 npm --prefix frontend run dev
 ```
 
-Abrir http://localhost:3000.
-
-### Interfaz web (producción)
-
-```bash
-npm --prefix frontend run build
-python backend/api.py
-```
-
-Abrir http://localhost:8000.
-
 ## API
 
 Documentación interactiva en `/docs`.
 
 | Método | Ruta | Descripción |
 | --- | --- | --- |
-| GET | `/health` | Estado del servidor |
-| GET | `/api/modelos` | Modelos disponibles |
-| GET | `/api/metricas` | Métricas del entrenamiento |
-| POST | `/api/clasificar` | Clasificar un mensaje |
+| GET | `/health` | Estado del servidor. |
+| GET | `/api/modelos` | Modelos disponibles. |
+| GET | `/api/metricas` | Métricas del entrenamiento. |
+| POST | `/api/clasificar` | Clasificar un mensaje. |
 
 CORS se configura con `CORS_ORIGINS`; host y puerto con `HOST` y `PORT`.
 
-## Licencia
+## Licencias
 
 El dataset es de Tanaos y se distribuye bajo la licencia MIT. Ver [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) para más información.
 
